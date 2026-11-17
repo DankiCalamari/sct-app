@@ -335,6 +335,9 @@ class SCTHandler(BaseHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             self.send_json(500, {"error": "Internal error", "details": str(exc)})
             return
+        if result is None:
+            # Response already sent by the handler (e.g. static_file)
+            return
         if isinstance(result, dict):
             cookie = result.get("__cookie__")
             if "__redirect__" in result:
