@@ -409,12 +409,12 @@ def static_file(req, filename):
     mime = mimetypes.guess_type(safe_path)[0] or "application/octet-stream"
     with open(safe_path, "rb") as f:
         data = f.read()
-    req.send_response(200)
-    req.send_header("Content-Type", mime)
-    req.send_header("Content-Length", len(data))
-    req.end_headers()
+    req.handler.send_response(200)
+    req.handler.send_header("Content-Type", mime)
+    req.handler.send_header("Content-Length", len(data))
+    req.handler.end_headers()
     if req.method != "HEAD":
-        req.wfile.write(data)
+        req.handler.wfile.write(data)
     return None
 
 
