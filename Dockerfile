@@ -7,7 +7,7 @@
 #
 # Requires MySQL (8.x) as a separate service or host-side instance.
 # Pair this image with the included ``docker-compose.yml`` which also
-# provisioning a MySQL 8 container (see ``docker-compose.yml``).
+# provisions a MySQL 8 container (see ``docker-compose.yml``).
 #
 # Quick start:
 #   docker compose up --build -d
