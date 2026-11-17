@@ -13,6 +13,7 @@ import hmac
 import json
 import os
 import re
+import mimetypes
 import urllib.parse
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -293,11 +294,12 @@ def re_path(p):
     def _replace(m):
         param = m.group(1)
         if ":" in param:
-            _, name = param.split(":", 1)
+            ctype, name = param.split(":", 1)
         else:
-            name = param
+            ctype, name = None, param
+        if ctype == "path":
+            return f"(?P<{name}>.+?)"
         return f"(?P<{name}>[^/]+?)"
-
     return re.sub(r"<([^>]+)>", _replace, p) + "$"
 
 
@@ -336,6 +338,7 @@ class SCTHandler(BaseHTTPRequestHandler):
                 self.send_response(302)
                 if cookie:
                     self.send_session_cookie(cookie)
+                self.send_header("Location", result["__redirect__"])
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
@@ -372,6 +375,26 @@ class SCTHandler(BaseHTTPRequestHandler):
 # Routes
 # --------------------------------------------------------------------------- #
 ROUTER = Router()
+@ROUTER.route("/static/<path:filename>", ["GET"])
+def static_file(req, filename):
+    """Serve static assets with the correct MIME type (CSS/JS) so browsers do not block them."""
+    static_dir = STATIC_DIR
+    safe_path = os.path.realpath(os.path.join(static_dir, filename))
+    if not safe_path.startswith(static_dir):
+        return {"error": "Not found"}, 404
+    if not os.path.isfile(safe_path):
+        return {"error": "Not found"}, 404
+    ext = os.path.splitext(safe_path)[1].lower()
+    mime = mimetypes.guess_type(safe_path)[0] or "application/octet-stream"
+    with open(safe_path, "rb") as f:
+        data = f.read()
+    req.send_response(200)
+    req.send_header("Content-Type", mime)
+    req.send_header("Content-Length", len(data))
+    req.end_headers()
+    req.wfile.write(data)
+    return None
+
 
 
 @ROUTER.route("/login", ["GET", "POST"])
@@ -561,11 +584,11 @@ def ticket_new(req):
                 "customer_id": (req.form.get("customer_id") or "") or None,
                 "enquiry_id": None,
             }
-            if not form["title"]:
+            if not fields["title"]:
                 flash("error", "Ticket title is required.")
-                return {"template": "tickets/form.html", "form": form}
-            cid = db_mod.save_ticket(conn, form)
-            flash("success", f"Ticket {form['priority'].upper()} created.")
+                return {"template": "tickets/form.html", "form": fields}
+            cid = db_mod.save_ticket(conn, fields)
+            flash("success", f"Ticket {fields['priority'].upper()} created.")
             return redirect("/tickets")
         finally:
             conn.close()
