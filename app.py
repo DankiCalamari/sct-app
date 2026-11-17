@@ -1181,10 +1181,23 @@ def main():
     os.makedirs(config.UPLOAD_DIR, exist_ok=True)
     db_mod.apply_migrations()
     auth.seed_local_users(db_mod.get_connection())
+    
     port = int(os.environ.get("SCT_PORT", "8080"))
-    from http.server import ThreadingHTTPServer
+    use_tls = os.environ.get("SCT_TLS", "0") == "1"
+    
     httpd = ThreadingHTTPServer(("0.0.0.0", port), SCTHandler)
-    print(f"SCT app listening on http://0.0.0.0:{port}")
+    
+    if use_tls:
+        cert_path = os.environ.get("SCT_CERT_FILE", "/app/cert/cert.pem")
+        key_path = os.environ.get("SCT_KEY_FILE", "/app/cert/key.pem")
+        import ssl
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(certfile=cert_path, keyfile=key_path)
+        httpd.socket = ssl_context.wrap_socket(httpd.socket, server_side=True)
+        print(f"SCT app listening on https://0.0.0.0:{port}")
+    else:
+        print(f"SCT app listening on http://0.0.0.0:{port}")
+    
     httpd.serve_forever()
 
 

@@ -44,6 +44,8 @@ services:
       context: .
       dockerfile: Dockerfile
     image: sct-app:latest
+    env_file:
+      - .env
     environment:
       # MySQL connection (points at the sibling service on the shared network)
       SCT_DB_ENGINE: mysql
@@ -54,20 +56,23 @@ services:
       SCT_DB_NAME: ${SCT_DB_NAME:-sct}
       # App behaviour
       SCT_PORT: "8080"
+      SCT_TLS: "1"
+      SCT_CERT_FILE: /app/cert/cert.pem
+      SCT_KEY_FILE: /app/cert/key.pem
       SCT_SECRET_KEY: ${SCT_SECRET_KEY:-change-me-in-prod}
       # Local email mode (never auto-sends to real addresses in test harness)
       SCT_EMAIL_METHOD: local
       # Auth mode (local = seeded demo users; authentik = OIDC SSO)
       SCT_AUTH_MODE: local
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8067:8080"
+      - "127.0.0.1:8443:8443"
+    volumes:
+      - ./cert:/app/cert:ro
+      - sct_app_data:/app/data
     depends_on:
       sct-mysql:
         condition: service_healthy
-    # Mount the app's own data dir (server.log) so log content survives
-    # `docker compose down` when you care about it; optional.
-    volumes:
-      - sct_app_data:/app/data
     restart: unless-stopped
 
 volumes:
