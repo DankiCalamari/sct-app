@@ -1,0 +1,33 @@
+# SCT .dockerignore
+# ---------------------------------------------------------------------------
+# Everything that is NOT needed to build or run the container.
+#
+# Excluded:
+#   - data/            runtime logs + DB files (MySQL is external via compose)
+#   - uploads/         uploaded file store
+#   - __pycache__/*    python bytecode
+#   - *.pyc            compiled python
+#   - .env*            secrets / dotenv (do not bake secrets into images)
+#   - venv/  env/      python virtualenvs
+#   - node_modules/    npm deps (app is stdlib+Jinja2+pymysql only)
+#   - *.egg-info/      sdist/wheel metadata
+#   - git metadata     .git/ and .gitignore/.dockerignore are NOT needed at runtime
+#   - server.log       derived artifact
+
+data/
+uploads/
+__pycache__/
+*.pyc
+.env
+.env.*
+venv/
+.env
+env/
+node_modules/
+*.egg-info/
+.git/
+.gitignore
+.dockerignore
+docs/setup-mysql.md
+scripts/setup-mysql.sh
+tests/test_sct_mysql.py

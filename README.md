@@ -135,3 +135,73 @@ python3 -m pytest tests/test_sct_mysql.py -v
 - App is a single `python3 app.py` process on `0.0.0.0:8080`.
 - In an Umbrel container, publish the port (`-p 8080:8080`) or place behind a reverse proxy. The plain `http.server` does **not** handle Umbrel's auth header.
 - Use a reverse proxy for TLS/HTTPS. The app sets `X-Content-Type-Options: nosniff` and `SameSite=Lax` session cookies.
+
+## Docker deployment
+
+The app is a zero-dependency Python app (stdlib `http.server` + Jinja2 + pure-Python `pymysql`). No compilation, no system libraries beyond the Python runtime. A single `Dockerfile` builds the app image; a `docker-compose.yml` pairs it with a MySQL 8 container.
+
+### Quick start
+
+```bash
+# (a) clone the repo
+git clone https://github.com/<you>/sct-app.git && cd sct-app
+
+# (b) create your .env (copy from .env.example) and fill in the MySQL creds
+cp .env.example .env
+
+# (c) build + start the stack
+docker compose up --build -d
+docker compose logs -f sct-app   # watch the app start
+```
+
+Open `http://<host-or-ip>:8080`. Home `/` redirects to `/login`. Seeded demo accounts:
+`admin@sct.local` / `admin123` (admin), `tech@sct.local` / `tech123` (technician), `viewer@sct.local` / `view123` (viewer).
+
+### What each file does
+
+| File | Purpose |
+|---|---|
+| `Dockerfile` | Builds the app image: `python:3.14-slim`, installs `jinja2` + `pymysql` (pure-Python, no compile step), copies the app, runs as a non-root `sct` user on port 8080. |
+| `docker-compose.yml` | `sct-mysql` (MySQL 8.0) + `sct-app` (built from `Dockerfile`). `sct-app` depends on `sct-mysql` being healthy before starting, so the app's `apply_migrations()` + `seed_local_users()` run against a live DB. |
+| `.dockerignore` | Excludes `data/`, `uploads/`, `__pycache__`, `.env`, `venv/`, `.git/`, tests, etc. from the image. |
+| `.env.example` | Copy to `.env` (next to `docker-compose.yml`) to configure MySQL + app behaviour. |
+| `scripts/setup-mysql.sh` | One-time MySQL provisioning (create DB, user, schema, seed demo users). Use it on a host-side MySQL, or let `docker-compose` do it. |
+
+### Environment for a containerised MySQL
+
+The `docker-compose.yml` sets `SCT_DB_HOST=sct-mysql` (the MySQL service name on the shared Docker network). All other settings fall through to the `.env` file next to `docker-compose.yml`:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SCT_DB_ENGINE` | `mysql` | `mysql` or `postgres` (postgres not yet implemented) |
+| `SCT_DB_HOST` | `sct-mysql` (compose) | MySQL host |
+| `SCT_DB_PORT` | `3306` | MySQL port |
+| `SCT_DB_USER` | `sct` | DB user |
+| `SCT_DB_PASSWORD` | `sct` (compose default) | DB password |
+| `SCT_DB_NAME` | `sct` | DB name |
+| `SCT_PORT` | `8080` | App listen port |
+| `SCT_SECRET_KEY` | dev default | Session signing key (change in production) |
+| `SCT_AUTH_MODE` | `local` | `local` (seeded demo users) or `authentik` (OIDC SSO) |
+| `SCT_EMAIL_METHOD` | `local` | `local` (write to `data/emails/`) or `smtp` |
+
+### Persistent data
+
+- `sct_mysql_data` — MySQL data (survives `docker compose down`).
+- `sct_app_data` — app `data/` (server.log). Bind mount or volume if you want to keep it.
+
+### External access / TLS
+
+- Publish the app port (`-p 127.0.0.1:8080:8080` as in the compose file). The `http.server` does **not** handle TLS; terminate TLS in a reverse proxy (Nginx/Traefik/Caddy) in front of the container, and do not route through Umbrel's app proxy (it requires Umbrel's auth header, which the plain `http.server` does not understand).
+- The container listens on `0.0.0.0` so the host can reach it; bind to `127.0.0.1` for localhost-only access.
+
+### Testing the image without a live MySQL
+
+```bash
+# Build the app image only (does not run the app)
+docker build -t sct-app:local .
+
+# Verify the image runs its startup (apply_migrations + seed_users) against a
+# temporary throwaway MySQL, or against a running sct-mysql service.
+docker run --rm --network sct-network -e SCT_DB_ENGINE=mysql sct-app:local
+```
+

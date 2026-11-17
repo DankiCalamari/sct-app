@@ -1,0 +1,75 @@
+# SCT — docker-compose.yml
+#
+# Zero-dependency internal web app + a MySQL 8 database.
+#
+# Usage:
+#   docker compose up --build -d          # build & start both services
+#   docker compose logs -f sct-app        # watch app logs
+#   docker compose down                   # stop & remove containers
+#
+# Volumes note:
+#   The app writes a server.log into its own /app/data (ephemeral in the
+#   container).  No volumes are bound by default.  Mount ``./data:/app/data``
+#   if you want to retain logs across container restarts.
+#
+# Environment presets for the SCT_APP image are declared in the service.
+# Override any of them in a ``.env`` file next to this compose file, or on
+# the command line.  See README.md for the full env list.
+services:
+  sct-mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      # Root creds are passed through via MYSQL_ROOT_PASSWORD (from env).
+      MYSQL_ROOT_PASSWORD: ${SCT_MYSQL_ROOT_PASSWORD:-change-me-root}
+      # Service account used by the app (defaults to "sct" / "" password in app)
+      MYSQL_DATABASE: ${SCT_DB_NAME:-sct}
+      MYSQL_USER: ${SCT_DB_USER:-sct}
+      MYSQL_PASSWORD: ${SCT_DB_PASSWORD:-sct}
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      # Only needed if you want to connect to MySQL from outside the stack.
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - sct_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  sct-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sct-app:latest
+    environment:
+      # MySQL connection (points at the sibling service on the shared network)
+      SCT_DB_ENGINE: mysql
+      SCT_DB_HOST: sct-mysql
+      SCT_DB_PORT: "3306"
+      SCT_DB_USER: ${SCT_DB_USER:-sct}
+      SCT_DB_PASSWORD: ${SCT_DB_PASSWORD:-sct}
+      SCT_DB_NAME: ${SCT_DB_NAME:-sct}
+      # App behaviour
+      SCT_PORT: "8080"
+      SCT_SECRET_KEY: ${SCT_SECRET_KEY:-change-me-in-prod}
+      # Local email mode (never auto-sends to real addresses in test harness)
+      SCT_EMAIL_METHOD: local
+      # Auth mode (local = seeded demo users; authentik = OIDC SSO)
+      SCT_AUTH_MODE: local
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      sct-mysql:
+        condition: service_healthy
+    # Mount the app's own data dir (server.log) so log content survives
+    # `docker compose down` when you care about it; optional.
+    volumes:
+      - sct_app_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  sct_mysql_data:
+  sct_app_data:
