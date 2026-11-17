@@ -1,9 +1,11 @@
-# SCT — zero-dependency web app (stdlib + jinja2 + pymysql)
+# SCT — zero-dependency web app (stdlib + jinja2 + pymysql + PyJWT)
 #
 # Install (into your project venv):
-#   python3 -m pip install jinja2 pymysql
+#   python3 -m pip install jinja2 pymysql PyJWT
 #
 # jinja2 is the only "web framework" dependency besides stdlib http.server.
 # pymysql is a pure-Python MySQL driver (no compilation needed).
+# PyJWT is used by auth.py for JWT-based session/authentik handling.
 jinja2>=3.1
 pymysql>=1.1
+PyJWT>=2.0
