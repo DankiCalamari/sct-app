@@ -318,6 +318,9 @@ class SCTHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         self._handle("POST")
 
+    def do_HEAD(self):
+        self._handle("HEAD")
+
     def _handle(self, method):
         req = Request(self)
         _request_ctx.set(req)
@@ -375,7 +378,7 @@ class SCTHandler(BaseHTTPRequestHandler):
 # Routes
 # --------------------------------------------------------------------------- #
 ROUTER = Router()
-@ROUTER.route("/static/<path:filename>", ["GET"])
+@ROUTER.route("/static/<path:filename>", ["GET", "HEAD"])
 def static_file(req, filename):
     """Serve static assets with the correct MIME type (CSS/JS) so browsers do not block them."""
     static_dir = STATIC_DIR
@@ -392,7 +395,8 @@ def static_file(req, filename):
     req.send_header("Content-Type", mime)
     req.send_header("Content-Length", len(data))
     req.end_headers()
-    req.wfile.write(data)
+    if req.method != "HEAD":
+        req.wfile.write(data)
     return None
 
 
