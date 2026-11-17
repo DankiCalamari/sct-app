@@ -338,6 +338,21 @@ class SCTHandler(BaseHTTPRequestHandler):
         if result is None:
             # Response already sent by the handler (e.g. static_file)
             return
+        if isinstance(result, tuple) and len(result) == 2:
+            # (response, status) from a handler
+            payload, status = result
+            if isinstance(payload, dict):
+                if "__redirect__" in payload:
+                    self.send_response(302)
+                    self.send_header("Location", payload["__redirect__"])
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
+                if "__json__" in payload:
+                    self.send_json(200, payload["__json__"])
+                    return
+            self.send_json(int(status), payload)
+            return
         if isinstance(result, dict):
             cookie = result.get("__cookie__")
             if "__redirect__" in result:
