@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ 'New Ticket' if not form.customer_id else 'Edit Ticket' }} · SCT{% endblock %}
+{% block header %}<h1>{{ 'New Ticket' if not form.customer_id else 'Edit Ticket' }}</h1>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:760px;">
+  <h2 style="margin-top:0;">{{ 'New Ticket' if not form.customer_id else 'Edit Ticket' }}</h2>
+  <form method="post">
+    <div class="field">
+      <label for="title">Issue title *</label>
+      <input class="input" id="title" name="title" value="{{ form.title or '' }}" required>
+    </div>
+    <div class="field">
+      <label for="description">Detailed problem description</label>
+      <textarea class="textarea" id="description" name="description">{{ form.description or '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="device_make">Device make</label>
+      <input class="input" id="device_make" name="device_make" value="{{ form.device_make or '' }}">
+    </div>
+    <div class="field">
+      <label for="device_model">Device model</label>
+      <input class="input" id="device_model" name="device_model" value="{{ form.device_model or '' }}">
+    </div>
+    <div class="field">
+      <label for="serial_imei">Serial number / IMEI</label>
+      <input class="input" id="serial_imei" name="serial_imei" value="{{ form.serial_imei or '' }}">
+    </div>
+    <div class="field">
+      <label for="symptoms">Reported symptoms</label>
+      <textarea class="textarea" id="symptoms" name="symptoms">{{ form.symptoms or '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="diagnosis">Initial diagnostic notes</label>
+      <textarea class="textarea" id="diagnosis" name="diagnosis">{{ form.diagnosis or '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="priority">Priority</label>
+      <select class="select" id="priority" name="priority">
+        <option value="low" {% if form.priority=='low' %}selected{% endif %}>Low</option>
+        <option value="medium" {% if form.priority=='medium' %}selected{% endif %}>Medium</option>
+        <option value="high" {% if form.priority=='high' %}selected{% endif %}>High</option>
+        <option value="urgent" {% if form.priority=='urgent' %}selected{% endif %}>Urgent</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="customer_id">Customer</label>
+      <select class="select" id="customer_id" name="customer_id">
+        <option value="">— Select existing customer —</option>
+        {% set _ = customers|selectattr('id')|list %}
+        {% for c in customers %}
+          <option value="{{ c.id }}" {% if form.customer_id|string == c.id|string %}selected{% endif %}>{{ c.first_name }} {{ c.last_name }} ({{ c.customer_id }})</option>
+        {% endfor %}
+        <option value="new">+ New customer…</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="enquiry_id">Enquiry (optional)</label>
+      <select class="select" id="enquiry_id" name="enquiry_id">
+        <option value="">— None —</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ 'Save changes' if form.customer_id else 'Create ticket' }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

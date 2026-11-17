@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Customer' if form.customer_id else 'New Customer' }} · SCT{% endblock %}
+{% block header %}<h1>{{ 'Edit Customer' if form.customer_id else 'New Customer' }}</h1>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:760px;">
+  <h2 style="margin-top:0;">{{ 'Edit Customer' if form.customer_id else 'New Customer' }}</h2>
+  <form method="post">
+    <div class="field">
+      <label for="first_name">First name *</label>
+      <input class="input" id="first_name" name="first_name" value="{{ form.first_name or '' }}" required>
+    </div>
+    <div class="field">
+      <label for="last_name">Last name *</label>
+      <input class="input" id="last_name" name="last_name" value="{{ form.last_name or '' }}" required>
+    </div>
+    <div class="field">
+      <label for="business_name">Business / organisation name</label>
+      <input class="input" id="business_name" name="business_name" value="{{ form.business_name or '' }}" placeholder="Optional">
+    </div>
+    <div class="field">
+      <label for="email">Email address *</label>
+      <input class="input" id="email" name="email" type="email" value="{{ form.email or '' }}" required>
+    </div>
+    <div class="field">
+      <label for="phone_primary">Primary phone</label>
+      <input class="input" id="phone_primary" name="phone_primary" value="{{ form.phone_primary or '' }}">
+    </div>
+    <div class="field">
+      <label for="phone_alternative">Alternative phone</label>
+      <input class="input" id="phone_alternative" name="phone_alternative" value="{{ form.phone_alternative or '' }}">
+    </div>
+    <div class="field">
+      <label for="customer_type">Customer type *</label>
+      <select class="select" id="customer_type" name="customer_type">
+        <option value="individual" {% if form.customer_type=='individual' %}selected{% endif %}>Individual</option>
+        <option value="business" {% if form.customer_type=='business' %}selected{% endif %}>Business</option>
+        <option value="organisation" {% if form.customer_type=='organisation' %}selected{% endif %}>Organisation</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="billing_address">Billing address</label>
+      <textarea class="textarea" id="billing_address" name="billing_address" placeholder="Billing address">{{ form.billing_address or '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="service_address">Service address</label>
+      <textarea class="textarea" id="service_address" name="service_address" placeholder="Where work will be done">{{ form.service_address or '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="preferred_contact">Preferred contact</label>
+      <select class="select" id="preferred_contact" name="preferred_contact">
+        <option value="" {% if not form.preferred_contact %}selected{% endif %}>Prefer not to say</option>
+        <option value="email" {% if form.preferred_contact=='email' %}selected{% endif %}>Email</option>
+        <option value="phone" {% if form.preferred_contact=='phone' %}selected{% endif %}>Phone</option>
+        <option value="both" {% if form.preferred_contact=='both' %}selected{% endif %}>Both</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="notes">Notes</label>
+      <textarea class="textarea" id="notes" name="notes" placeholder="Internal notes…">{{ form.notes or '' }}</textarea>
+    </div>
+    <input type="hidden" name="customer_id" value="{{ form.customer_id or '' }}">
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ 'Save changes' if form.customer_id else 'Create customer' }}</button>
+      <a class="btn btn-secondary" href="{{ url_for('customer_detail', cid=form.customer_id or 0) }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}{{ t.ticket_ref }} · SCT{% endblock %}
+{% block header %}<h1>{{ t.ticket_ref }}</h1><p class="subtitle">{{ t.title }}</p>{% endblock %}
+{% block content %}
+<div class="card" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">
+  <div class="card" style="padding:16px;">
+    <h3 style="margin-top:0;">Ticket details</h3>
+    <p><strong>Ref:</strong> {{ t.ticket_ref }}</p>
+    <p><strong>Customer:</strong> {{ t.customer_id }}</p>
+    <p><strong>Priority:</strong> <span class="badge {{ PRIORITY_COLORS[t.priority] }}">{{ t.priority }}</span></p>
+    <p><strong>Status:</strong> <span class="badge {{ STATUS_COLORS[t.status] }}">{{ STATUS_LABELS[t.status] }}</span></p>
+    <p><strong>Assigned:</strong> {{ t.assigned_to or '—' }}</p>
+    <p><strong>Created:</strong> {{ t.created_at[:10] }}</p>
+    <p><strong>Updated:</strong> {{ t.updated_at[:10] }}</p>
+  </div>
+  <div class="card" style="padding:16px;">
+    <h3 style="margin-top:0;">Device</h3>
+    <p>Make: {{ t.device_make or '—' }}</p>
+    <p>Model: {{ t.device_model or '—' }}</p>
+    <p>Serial IMEI: {{ t.serial_imei or '—' }}</p>
+  </div>
+  <div class="card" style="padding:16px;">
+    <h3 style="margin-top:0;">Summary</h3>
+    <p>{{ t.description or '—' }}</p>
+    <p><strong>Symptoms:</strong> {{ t.symptoms or '—' }}</p>
+    <p><strong>Diagnosis:</strong> {{ t.diagnosis or '—' }}</p>
+    <p><strong>Resolution:</strong> {{ t.resolution or '—' }}</p>
+  </div>
+</div>
+
+<div class="card" style="display:flex;flex-wrap:wrap;gap:16px;">
+  <div style="flex:1.4min(0,520px);">
+    <h3 style="margin-top:0;">Status history</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>From</th><th>To</th><th>Changed by</th><th>Note</th><th>At</th></tr></thead>
+      <tbody>
+      {% for h in histories %}
+        <tr>
+          <td><span class="badge {{ STATUS_COLORS[h.from_status] }}">{{ STATUS_LABELS[h.from_status] }}</span></td>
+          <td><span class="badge {{ STATUS_COLORS[h.to_status] }}">{{ STATUS_LABELS[h.to_status] }}</span></td>
+          <td>{{ h.changed_by or '—' }}</td>
+          <td style="font-size:0.82rem;">{{ h.note or '—' }}</td>
+          <td style="font-size:0.82rem;color:var(--slate-500);">{{ h.changed_at[:16] }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="empty">No status history.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  <div style="flex:1">
+    <h3 style="margin-top:0;">Internal notes</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Author</th><th>At</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for n in internal_notes %}
+        <tr>
+          <td>{{ n.author or '—' }}</td>
+          <td style="font-size:0.82rem;color:var(--slate-500);">{{ n.created_at[:16] }}</td>
+          <td style="font-size:0.85rem;">{{ n.note }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="empty">No internal notes.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  <div style="flex:1">
+    <h3 style="margin-top:0;">Customer-facing notes</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Author</th><th>At</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for n in customer_notes %}
+        <tr>
+          <td>{{ n.author or '—' }}</td>
+          <td style="font-size:0.82rem;color:var(--slate-500);">{{ n.created_at[:16] }}</td>
+          <td style="font-size:0.85rem;">{{ n.note }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="empty">No customer notes.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <h3 style="margin:0;">Attached files</h3>
+    <label class="btn btn-secondary btn-sm" style="padding:6px 12px;">
+      Upload
+      <input type="file" id="file-input" style="display:none;" multiple>
+    </label>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>File</th><th>Size</th><th>Uploaded</th></tr></thead>
+    <tbody>
+    {% for f in files %}
+      <tr>
+        <td>{{ f.original_name }}</td>
+        <td style="font-size:0.82rem;color:var(--slate-500);">{{ f.size_bytes }} bytes</td>
+        <td style="font-size:0.82rem;color:var(--slate-500);">{{ f.uploaded_at[:16] }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3" class="empty">No files.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card" style="display:flex;flex-wrap:wrap;gap:16px;">
+  <div style="flex:1.3min(0,480px);">
+    <h3 style="margin-top:0;">Workflow</h3>
+    <div class="field" style="margin-top:12px;">
+      <label>Change status</label>
+      <select class="select" id="status-select" style="width:auto;display:inline-block;">
+        {% for s in ['new_enquiry','awaiting_assessment','awaiting_quote','awaiting_customer_approval','approved','scheduled','in_progress','awaiting_parts','awaiting_customer','completed','ready_for_collection','closed','cancelled'] %}
+          <option value="{{ s }}" {% if s == t.status %}selected{% endif %}>{{ STATUS_LABELS[s] }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-primary btn-sm" style="margin-left:8px;" id="status-save" disabled>Update status</button>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label for="internal-note">Internal note</label>
+      <textarea class="textarea" id="internal-note" placeholder="Technical notes…"></textarea>
+      <button class="btn btn-secondary btn-sm" id="internal-save" style="margin-top:8px;">Add internal note</button>
+    </div>
+  </div>
+  <div style="flex:1">
+    <h3 style="margin-top:0;">Customer updates</h3>
+    <div class="field" style="margin-top:12px;">
+      <label for="customer-note">Customer-facing note</label>
+      <textarea class="textarea" id="customer-note" placeholder="Progress update for the customer…"></textarea>
+      <button class="btn btn-secondary btn-sm" id="customer-save" style="margin-top:8px;">Add customer update</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

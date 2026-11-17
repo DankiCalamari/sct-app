@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Sign in · SCT{% endblock %}
+{% block header %}<h1 style="margin:0;">Sign in</h1>{% endblock %}
+{% block content %}
+<div style="max-width:420px;margin:40px auto;">
+  <div class="card" style="padding:28px;">
+    <h2 style="margin-top:0;">Welcome back</h2>
+    <p class="subtitle" style="margin-bottom:20px;">Sign in to Sun Country Tech admin.</p>
+    {% if error %}<div class="flash flash-error" style="margin-bottom:16px;">{{ error }}</div>{% endif %}
+    <form method="post" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Sign in</button>
+      </div>
+      <p class="hint" style="margin-top:12px;">
+        Demo accounts: admin / admin123 · tech / tech123 · viewer / view123
+      </p>
+    </form>
+  </div>
+</div>
+{% endblock %}

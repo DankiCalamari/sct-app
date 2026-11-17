@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SCT · Sun Country Tech{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<div class="app">
+  <aside class="app-sidebar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="#D96C36"/>
+        <path d="M8 24 L14 10 L18 16 L24 6" stroke="#F7F3EA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="22" cy="14" r="2.2" fill="#FFF" stroke="#D96C36" stroke-width="2"/>
+      </svg>
+      <div>
+        <div class="brand-name">SCT</div>
+        <div class="brand-sub">Sun Country Tech</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <a href="{{ url_for('dashboard') }}" {% if active == 'dashboard' %}class="active"{% endif %}>
+        <span class="label">Dashboard</span>
+      </a>
+      <a href="{{ url_for('customers_list') }}" {% if active == 'customers' %}class="active"{% endif %}>
+        <span class="label">Customers</span>
+      </a>
+      <a href="{{ url_for('tickets_list') }}" {% if active == 'tickets' %}class="active"{% endif %}>
+        <span class="label">Tickets</span>
+      </a>
+      <a href="{{ url_for('appointments_list') }}" {% if active == 'appointments' %}class="active"{% endif %}>
+        <span class="label">Appointments</span>
+      </a>
+      <a href="{{ url_for('quotes_list') }}" {% if active == 'quotes' %}class="active"{% endif %}>
+        <span class="label">Quotes</span>
+      </a>
+      <a href="{{ url_for('invoices_list') }}" {% if active == 'invoices' %}class="active"{% endif %}>
+        <span class="label">Invoices</span>
+      </a>
+      <a href="{{ url_for('service_records', cid=0) }}" {% if active == 'service' %}class="active"{% endif %}>
+        <span class="label">Service History</span>
+      </a>
+      {% if g.user and g.user.role == 'admin' %}
+      <div class="nav-section">Admin</div>
+      <a href="{{ url_for('admin_users') }}" {% if active == 'users' %}class="active"{% endif %}>
+        <span class="label">Users</span>
+      </a>
+      <a href="{{ url_for('audit') }}" {% if active == 'audit' %}class="active"{% endif %}>
+        <span class="label">Audit Log</span>
+      </a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-footer" style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.1);">
+      <div class="avatar">{{ g.user.name|first if g.user else '?' }}</div>
+      <div style="font-size:0.82rem;color:rgba(255,255,255,0.7);">{{ g.user.name if g.user else '' }}</div>
+      <div style="font-size:0.72rem;color:rgba(255,255,255,0.5);">{{ g.user.role if g.user else '' }}</div>
+    </div>
+  </aside>
+
+  <main class="app-main">
+    <header class="app-header">
+      <div>
+        {% block header %}{% endblock %}
+      </div>
+      <div class="header-actions">
+        {% if g.user %}
+        <form method="post" action="{{ url_for('logout') }}" style="display:inline;">
+          <button class="btn btn-secondary btn-sm" type="submit">Log out</button>
+        </form>
+        {% endif %}
+      </div>
+    </header>
+
+    <div class="app-content">
+      {% for f in get_flashed() %}
+      <div class="flash flash-{{ f.category }}">{{ f.message }}</div>
+      {% endfor %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

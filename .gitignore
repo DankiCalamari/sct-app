@@ -1,0 +1,35 @@
+# SCT app — .gitignore
+# ---------------------------------------------------------------------------
+# Runtime / generated artifacts
+data/
+uploads/
+server.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# OS / editors
+.DS_Store
+*.swp
+*~
+
+# Database files (local development only)
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs (already covered by data/, but be explicit)
+*.log

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}{{ c.customer_id }} · SCT{% endblock %}
+{% block header %}<h1>{{ c.customer_id }}</h1><p class="subtitle">{{ c.first_name }} {{ c.last_name }}{% if c.business_name %} — {{ c.business_name }}{% endif %}</p>{% endblock %}
+{% block content %}
+<div class="card" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">
+  <div class="card" style="padding:16px;">
+    <h3 style="margin-top:0;font-size:0.95rem;">Contact</h3>
+    <p style="margin:6px 0;"><strong>Email:</strong> {{ c.email or '—' }}</p>
+    <p style="margin:6px 0;"><strong>Phone:</strong> {{ c.phone_primary or '—' }}{% if c.phone_alternative %} / {{ c.phone_alternative }}{% endif %}</p>
+    <p style="margin:6px 0;"><strong>Type:</strong> {{ c.customer_type }}</p>
+    <p style="margin:6px 0;"><strong>Status:</strong> <span class="badge bg-emerald-100 text-emerald-800">{{ c.status }}</span></p>
+  </div>
+  <div class="card" style="padding:16px;">
+    <h3 style="margin-top:0;font-size:0.95rem;">Addresses</h3>
+    <p style="margin:6px 0;"><strong>Billing:</strong><br>{{ c.billing_address or '—' }}</p>
+    <p style="margin:6px 0;"><strong>Service:</strong><br>{{ c.service_address or '—' }}</p>
+  </div>
+  <div class="card" style="padding:16px;">
+    <h3 style="margin-top:0;font-size:0.95rem;">Timeline</h3>
+    <p><strong>Created:</strong> {{ c.date_created[:10] }}</p>
+    <p><strong>Last interaction:</strong> {{ c.last_interaction or '—' }}</p>
+  </div>
+</div>
+
+<div class="card" style="display:flex;flex-wrap:wrap;gap:16px;align-items:start;">
+  <div style="flex:1.25min(0,420px);">
+    <h3 style="margin-top:0;">Associated tickets</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Ref</th><th>Title</th><th>Priority</th><th>Status</th><th>Updated</th></tr></thead>
+      <tbody>
+      {% for t in tickets %}
+        <tr>
+          <td><a href="{{ url_for('ticket_detail', tid=t.id) }}">{{ t.ticket_ref }}</a></td>
+          <td>{{ t.title }}</td>
+          <td><span class="badge {{ PRIORITY_COLORS[t.priority] }}">{{ t.priority }}</span></td>
+          <td><span class="badge {{ STATUS_COLORS[t.status] }}">{{ STATUS_LABELS[t.status] }}</span></td>
+          <td style="font-size:0.82rem;color:var(--slate-500);">{{ t.updated_at[:10] }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="empty">No tickets yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  <div style="flex:1">
+    <h3 style="margin-top:0;">Appointments</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Ref</th><th>Type</th><th>Date</th><th>Time</th><th>Location</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for a in appointments %}
+        <tr>
+          <td><a href="{{ url_for('appointment_detail', aid=a.id) }}">{{ a.appt_ref }}</a></td>
+          <td>{{ a.appt_type }}</td>
+          <td>{{ a.scheduled_for }}</td>
+          <td>{{ a.start_time }}</td>
+          <td>{{ a.location or '—' }}</td>
+          <td><span class="badge {{ STATUS_COLORS[a.status] }}">{{ a.status }}</span></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="empty">No appointments.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  <div style="flex:1">
+    <h3 style="margin-top:0;">Quotes &amp; invoices</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Quote #</th><th>Status</th><th>Total</th><th>Invoice #</th><th>Paid</th></tr></thead>
+      <tbody>
+      {% for q in quotes %}
+        <tr>
+          <td>{{ q.quote_ref }}</td>
+          <td><span class="badge {{ STATUS_COLORS[q.status] }}">{{ STATUS_LABELS[q.status] }}</span></td>
+          <td style="text-align:right;">{{ '%.2f'|format(q.total) }}</td>
+          <td>{% if q.invoices %}{{ q.invoices[0].invoice_ref }}{% else %}—{% endif %}</td>
+          <td><span class="badge {% if q.invoices and q.invoices[0].payment_status=='paid' %}bg-emerald-100 text-emerald-800{% else %}bg-slate-300 text-slate-700{% endif %}">{{ q.invoices[0].payment_status if q.invoices else '—' }}</span></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="empty">No quotes.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <h3 style="margin:0;">Service history</h3>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('service_records', cid=c.id) }}">+ Add service record</a>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Issue</th><th>Diagnostics</th><th>Work performed</th><th>Parts</th><th>Outcome</th></tr></thead>
+    <tbody>
+    {% for s in services %}
+      <tr>
+        <td style="font-size:0.82rem;color:var(--slate-500);">{{ s.service_date }}</td>
+        <td>{{ s.issue or '—' }}</td>
+        <td style="font-size:0.82rem;">{{ s.diagnostics or '—' }}</td>
+        <td style="font-size:0.82rem;">{{ s.work_performed or '—' }}</td>
+        <td style="font-size:0.82rem;">{{ s.parts_used or '—' }}</td>
+        <td style="font-size:0.82rem;">{{ s.outcome or '—' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="empty">No service records yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Work notes</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Type</th><th>Author</th><th>Note</th></tr></thead>
+    <tbody>
+    {% for n in notes %}
+      <tr>
+        <td style="font-size:0.82rem;color:var(--slate-500);">{{ n.created_at[:10] }}</td>
+        <td>{{ n.note_type }}</td>
+        <td>{{ n.author or '—' }}</td>
+        <td style="font-size:0.85rem;">{{ n.note }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="empty">No notes.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

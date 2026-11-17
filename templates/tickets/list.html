@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Tickets · SCT{% endblock %}
+{% block header %}<h1>Support Tickets</h1><p class="subtitle">Track enquiries from first contact to completion.</p>{% endblock %}
+{% block content %}
+<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <div class="field" style="margin:0;">
+      <label for="search" style="font-size:0.82rem;">Search</label>
+      <input class="input" id="search" name="search" type="text" value="{{ search }}" placeholder="Title, ticket ref…" style="width:auto;min-width:220px;">
+    </div>
+    <div class="field" style="margin:0;">
+      <select class="select" name="status" style="width:auto;min-width:200px;">
+        <option value="">All statuses</option>
+        <option value="new_enquiry" {% if status=='new_enquiry' %}selected{% endif %}>New enquiry</option>
+        <option value="awaiting_assessment" {% if status=='awaiting_assessment' %}selected{% endif %}>Awaiting assessment</option>
+        <option value="awaiting_quote" {% if status=='awaiting_quote' %}selected{% endif %}>Awaiting quote</option>
+        <option value="awaiting_customer_approval" {% if status=='awaiting_customer_approval' %}selected{% endif %}>Awaiting customer approval</option>
+        <option value="in_progress" {% if status=='in_progress' %}selected{% endif %}>In progress</option>
+        <option value="awaiting_parts" {% if status=='awaiting_parts' %}selected{% endif %}>Awaiting parts</option>
+        <option value="completed" {% if status=='completed' %}selected{% endif %}>Completed</option>
+        <option value="cancelled" {% if status=='cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('ticket_new') }}">+ New ticket</a>
+  </div>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Ref</th><th>Customer</th><th>Title</th><th>Priority</th><th>Status</th><th>Last updated</th></tr></thead>
+    <tbody>
+    {% for t in tickets %}
+      <tr>
+        <td><a href="{{ url_for('ticket_detail', tid=t.id) }}">{{ t.ticket_ref }}</a></td>
+        <td>{{ t.customer_id }}</td>
+        <td>{{ t.title }}</td>
+        <td><span class="badge {{ PRIORITY_COLORS[t.priority] }}">{{ t.priority }}</span></td>
+        <td><span class="badge {{ STATUS_COLORS[t.status] }}">{{ STATUS_LABELS[t.status] }}</span></td>
+        <td style="font-size:0.82rem;color:var(--slate-500);">{{ t.updated_at[:10] }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="empty">No tickets. Create one to get started.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
