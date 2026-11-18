@@ -64,7 +64,6 @@ services:
     ports:
       - "127.0.0.1:8067:8080"
     volumes:
-      - ./cert:/app/cert:ro
       - sct_app_data:/app/data
     depends_on:
       sct-mysql:
