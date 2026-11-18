@@ -32,12 +32,4 @@ USER sct
 
 # App listens on 0.0.0.0:8080 (Docker publishes this port).
 EXPOSE 8080
-
-# TLS certificate files
-COPY cert/ /app/cert/
-RUN chown -R sct:sct /app/cert
-
-# Start the app with HTTPS support (self-signed cert for LAN use).
-# Use SCT_TLS=1 to enable TLS on port 8443. For production, run behind
-# a reverse proxy (nginx/caddy) with a proper certificate.
 CMD ["python", "app.py"]

@@ -20,6 +20,7 @@ env/
 .env
 .env.local
 .env.*.local
+cert/
 
 # OS / editors
 .DS_Store
